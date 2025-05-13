@@ -269,43 +269,22 @@ class NetworkPredictionWindow(tk.Toplevel):
         try:
             # Input değerleri
             current_values = self.network_parameters['inputs']
-            print("\nForward propagation steps:")
-            print(f"Initial input shape: {current_values.shape}")
             
             # Her layer için ileri yayılım
             for i in range(len(self.network_parameters['weights'])):
-                print(f"\nLayer {i}:")
-                print(f"  Current values shape: {current_values.shape}")
-                print(f"  Weight matrix shape: {self.network_parameters['weights'][i].shape}")
-                print(f"  Bias shape: {self.network_parameters['biases'][i].shape}")
-                
                 # Ağırlıklı toplam (matris çarpımı)
-                # current_values: (n,) şeklinde
-                # weights[i]: (m,n) şeklinde, m=hedef boyut, n=kaynak boyut
-                # Sonuç: (m,) şeklinde olmalı
                 z = np.dot(self.network_parameters['weights'][i], current_values)
-                print(f"  After weight multiplication shape: {z.shape}")
                 
                 # Bias ekle
                 z = z + self.network_parameters['biases'][i]
-                print(f"  After bias addition shape: {z.shape}")
                 
                 # Aktivasyon fonksiyonu
                 current_values = ACTIVATION_FUNCTIONS[self.activation_var.get()][0](z)
-                print(f"  After activation shape: {current_values.shape}")
             
-            print(f"\nFinal output shape: {current_values.shape}")
             return current_values
             
         except Exception as e:
             print(f"Tahmin hesaplanırken hata: {str(e)}")
-            # Hata detaylarını yazdır
-            print("Matris boyutları:")
-            for i, w in enumerate(self.network_parameters['weights']):
-                print(f"Layer {i}:")
-                print(f"  Weight shape: {w.shape}")
-                print(f"  Input shape: {current_values.shape if 'current_values' in locals() else 'N/A'}")
-                print(f"  Bias shape: {self.network_parameters['biases'][i].shape}")
             return np.zeros(self.output_count)  # Hata durumunda sıfır dön
     
     def update_predictions(self):
@@ -506,7 +485,7 @@ class NetworkPredictionWindow(tk.Toplevel):
         self.destroy()
         
     def train_network(self):
-        """Ağı eğit"""
+        """Ağı eğit - input ve bias değerleri sabit kalır"""
         try:
             # Epoch sayısını kontrol et
             epochs = int(self.epoch_var.get())
@@ -537,9 +516,13 @@ class NetworkPredictionWindow(tk.Toplevel):
             activation_func, activation_derivative = ACTIVATION_FUNCTIONS[activation_name]
             loss_func, loss_derivative = LOSS_FUNCTIONS[loss_name]
             
+            # Orijinal input ve bias değerlerini sakla
+            original_inputs = self.network_parameters['inputs'].copy()
+            original_biases = [bias.copy() for bias in self.network_parameters['biases']]
+            
             network = NeuralNetwork(
                 weights=self.network_parameters['weights'].copy(),
-                biases=self.network_parameters['biases'].copy(),
+                biases=original_biases,
                 activation_func=activation_func,
                 activation_derivative=activation_derivative,
                 loss_func=loss_func,
@@ -580,20 +563,18 @@ class NetworkPredictionWindow(tk.Toplevel):
             
             for epoch in range(epochs):
                 # İleri yayılım ve geri yayılım
-                output = network.forward_propagation(self.network_parameters['inputs'])
+                output = network.forward_propagation(original_inputs)
                 current_loss = network.loss_func(output, np.array(actual_values))
-                network.backward_propagation(self.network_parameters['inputs'], np.array(actual_values))
+                network.backward_propagation(original_inputs, np.array(actual_values))
                 
                 # Loss değerini kaydet
-                loss_history.append(float(current_loss))  # numpy float'ı normal float'a çevir
+                loss_history.append(float(current_loss))
                 
                 # Progress bar'ı güncelle
                 if epoch % update_interval == 0:
                     progress = (epoch + 1) / epochs * 100
                     progress_bar['value'] = progress
                     loss_label['text'] = f"Loss: {current_loss:.6f}"
-                    
-                    # GUI'yi güncelle
                     progress_window.update()
                     
                     # Her 10 güncellemede bir loss plot'u güncelle
@@ -606,22 +587,44 @@ class NetworkPredictionWindow(tk.Toplevel):
             # Loss plot'u güncelle
             self.after(100, lambda: self.update_loss_plot(loss_history))
             
-            # Ağırlıkları güncelle
+            # Sadece ağırlıkları güncelle, input ve bias değerlerini orijinal haliyle koru
             self.network_parameters['weights'] = network.weights
-            self.network_parameters['biases'] = network.biases
+            self.network_parameters['inputs'] = original_inputs
+            self.network_parameters['biases'] = original_biases
+            
+            # Güncellenmiş ağırlıkları konsola yazdır
+            print("\nGüncellenmiş Ağırlıklar:")
+            for i, weights in enumerate(self.network_parameters['weights']):
+                layer_name = "Giriş → Gizli" if i == 0 else "Gizli → Çıkış" if i == len(self.network_parameters['weights'])-1 else f"Gizli {i} → Gizli {i+1}"
+                print(f"\n{layer_name} Katmanı Ağırlıkları:")
+                print(weights)
             
             # Tahminleri güncelle
             self.after(200, self.update_predictions)
             
-            # Bilgi mesajını göster
-            self.after(300, lambda: messagebox.showinfo(
-                "Eğitim Tamamlandı",
-                f"Eğitim {epochs} epoch sonunda tamamlandı.\nSon loss değeri: {loss_history[-1]:.6f}"
-            ))
+            # Bilgi mesajını göster ve yeni pencereyi aç
+            def show_completion_and_params():
+                messagebox.showinfo(
+                    "Eğitim Tamamlandı",
+                    f"Eğitim {epochs} epoch sonunda tamamlandı.\nSon loss değeri: {loss_history[-1]:.6f}"
+                )
+                self.show_updated_parameters()
+            
+            self.after(300, show_completion_and_params)
             
         except Exception as e:
             messagebox.showerror("Hata", f"Eğitim sırasında bir hata oluştu: {str(e)}")
 
+    def show_updated_parameters(self):
+        """Güncellenmiş parametreleri yeni bir pencerede göster"""
+        try:
+            # Yeni bilgi penceresini aç
+            from network_info_window import NetworkInfoWindow
+            info_window = NetworkInfoWindow(self, self.network_parameters)
+            
+        except Exception as e:
+            messagebox.showerror("Hata", f"Parametre penceresi açılırken bir hata oluştu: {str(e)}")
+        
     def check_actual_values(self, event=None):
         """Gerçek değerlerin geçerliliğini kontrol et"""
         all_valid = True
