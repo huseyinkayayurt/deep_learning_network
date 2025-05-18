@@ -3,6 +3,7 @@ from tkinter import ttk
 import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 import numpy as np
+import platform
 
 class NetworkInfoWindow(tk.Toplevel):
     def __init__(self, parent, network_parameters):
@@ -12,212 +13,137 @@ class NetworkInfoWindow(tk.Toplevel):
         self.network_parameters = network_parameters
         
         # Pencere ayarları
-        self.title("Güncellenmiş Ağ Parametreleri")
+        self.title("Ağ Parametreleri")
         self.geometry("800x600")
         self.minsize(600, 400)
         
-        # Ana grid yapılandırması
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(0, weight=1)
+        # Ana container
+        self.main_container = ttk.Frame(self)
+        self.main_container.pack(fill=BOTH, expand=YES)
         
-        # Canvas ve Scrollbar oluştur
-        self.canvas = tk.Canvas(self)
-        self.scrollbar = ttk.Scrollbar(self, orient="vertical", command=self.canvas.yview)
+        # Canvas ve scrollbar
+        self.canvas = tk.Canvas(self.main_container)
+        self.scrollbar = ttk.Scrollbar(self.main_container, orient="vertical", command=self.canvas.yview)
+        self.scrollable_frame = ttk.Frame(self.canvas)
         
-        # Ana içerik frame'i
-        self.main_frame = ttk.Frame(self.canvas)
-        self.main_frame.columnconfigure(0, weight=1)
+        # Scrollable frame'i canvas'a bağla
+        self.scrollable_frame.bind(
+            "<Configure>",
+            lambda e: self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        )
         
-        # Scrollbar'ı canvas'a bağla
+        # Canvas'a frame'i yerleştir
+        self.canvas_frame = self.canvas.create_window((0, 0), window=self.scrollable_frame, anchor="nw")
+        
+        # Canvas'ı scrollbar'a bağla
         self.canvas.configure(yscrollcommand=self.scrollbar.set)
         
-        # Yerleşim
-        self.scrollbar.grid(row=0, column=1, sticky="ns")
-        self.canvas.grid(row=0, column=0, sticky="nsew", padx=(10,0), pady=10)
+        # Layout
+        self.canvas.pack(side="left", fill="both", expand=True, padx=5, pady=5)
+        self.scrollbar.pack(side="right", fill="y", pady=5)
         
-        # Canvas'a frame'i ekle
-        self.canvas_frame = self.canvas.create_window((0,0), window=self.main_frame, anchor="nw", width=self.canvas.winfo_width())
-        
-        # Event bindings
-        self.main_frame.bind("<Configure>", self._on_frame_configure)
+        # Canvas boyutu değiştiğinde frame genişliğini güncelle
         self.canvas.bind("<Configure>", self._on_canvas_configure)
-        self.bind_all("<MouseWheel>", self._on_mousewheel)
         
-        # İçerik oluştur
-        self.create_content()
+        # Mousewheel event'lerini güvenli bir şekilde bağla
+        self._bind_mousewheel()
         
-    def _on_frame_configure(self, event=None):
-        """Frame boyutu değiştiğinde scroll bölgesini güncelle"""
-        self.canvas.configure(scrollregion=self.canvas.bbox("all"))
+        # Parametreleri göster
+        self.show_parameters()
+        
+        # Pencere kapatıldığında event'leri temizle
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
         
     def _on_canvas_configure(self, event):
         """Canvas boyutu değiştiğinde frame genişliğini güncelle"""
         self.canvas.itemconfig(self.canvas_frame, width=event.width)
         
+    def _bind_mousewheel(self):
+        # Sadece canvas'a bağla, platforma göre delta ayarla
+        if platform.system() == 'Darwin':
+            self.canvas.bind("<MouseWheel>", self._on_mousewheel_mac)
+        else:
+            self.canvas.bind("<MouseWheel>", self._on_mousewheel)
+        # Linux için ek olarak Button-4/5 de eklenebilir
+        self.canvas.bind("<Button-4>", self._on_mousewheel_linux)
+        self.canvas.bind("<Button-5>", self._on_mousewheel_linux)
+
+    def _unbind_mousewheel(self):
+        self.canvas.unbind("<MouseWheel>")
+        self.canvas.unbind("<Button-4>")
+        self.canvas.unbind("<Button-5>")
+
     def _on_mousewheel(self, event):
-        """Mouse tekerleği ile scroll"""
-        self.canvas.yview_scroll(int(-1*(event.delta/120)), "units")
+        # Windows/Linux
+        self.canvas.yview_scroll(int(-1 * (event.delta / 120)), "units")
+
+    def _on_mousewheel_mac(self, event):
+        # MacOS
+        self.canvas.yview_scroll(int(-1 * (event.delta)), "units")
+
+    def _on_mousewheel_linux(self, event):
+        # Linux için Button-4/5
+        if event.num == 4:
+            self.canvas.yview_scroll(-1, "units")
+        elif event.num == 5:
+            self.canvas.yview_scroll(1, "units")
         
-    def create_content(self):
-        """Pencere içeriğini oluştur"""
-        current_row = 0
+    def on_closing(self):
+        self._unbind_mousewheel()
+        self.destroy()
         
-        # Başlık
-        title = ttk.Label(
-            self.main_frame,
-            text="Eğitim Sonrası Güncellenmiş Ağ Parametreleri",
-            font=("Helvetica", 16, "bold"),
-            bootstyle="primary",
-            wraplength=700  # Uzun başlıklar için satır sonu
-        )
-        title.grid(row=current_row, column=0, pady=(0, 20), sticky="ew")
-        current_row += 1
-        
+    def show_parameters(self):
+        """Ağ parametrelerini göster"""
         # Input değerleri
         input_frame = ttk.LabelFrame(
-            self.main_frame,
+            self.scrollable_frame,
             text="Input Değerleri",
             bootstyle="primary"
         )
-        input_frame.grid(row=current_row, column=0, sticky="ew", pady=(0, 20))
-        input_frame.grid_columnconfigure(0, weight=1)
-        current_row += 1
+        input_frame.pack(fill=X, padx=10, pady=5)
         
-        # Input değerlerini grid olarak düzenle
-        input_grid = ttk.Frame(input_frame)
-        input_grid.grid(row=0, column=0, padx=10, pady=5, sticky="ew")
-        
-        cols_per_row = 3  # Her satırda gösterilecek input sayısı
-        for i, value in enumerate(self.network_parameters['inputs']):
-            row = i // cols_per_row
-            col = i % cols_per_row
-            input_grid.grid_columnconfigure(col, weight=1)
-            
-            cell_frame = ttk.Frame(input_grid)
-            cell_frame.grid(row=row, column=col, padx=5, pady=2, sticky="ew")
-            cell_frame.grid_columnconfigure(1, weight=1)
-            
+        input_values = self.network_parameters['inputs']
+        for i, value in enumerate(input_values):
             ttk.Label(
-                cell_frame,
-                text=f"X{i+1}:",
-                font=("Helvetica", 11)
-            ).grid(row=0, column=0, padx=(0, 5))
+                input_frame,
+                text=f"X{i+1}: {value:.6f}",
+                font=("Helvetica", 12)
+            ).pack(padx=10, pady=2)
             
-            ttk.Label(
-                cell_frame,
-                text=f"{value:.6f}",
-                font=("Helvetica", 11)
-            ).grid(row=0, column=1, sticky="w")
-        
-        # Bias değerleri
-        bias_frame = ttk.LabelFrame(
-            self.main_frame,
-            text="Bias Değerleri",
-            bootstyle="primary"
-        )
-        bias_frame.grid(row=current_row, column=0, sticky="ew", pady=(0, 20))
-        bias_frame.grid_columnconfigure(0, weight=1)
-        current_row += 1
-        
-        for layer_idx, layer_biases in enumerate(self.network_parameters['biases']):
-            layer_name = f"Gizli Katman {layer_idx+1}" if layer_idx < len(self.network_parameters['biases'])-1 else "Çıkış Katmanı"
+        # Her katman için ağırlıklar ve bias'lar
+        for i in range(len(self.network_parameters['weights'])):
+            # Katman başlığı
+            layer_name = "Giriş → Gizli" if i == 0 else "Gizli → Çıkış" if i == len(self.network_parameters['weights'])-1 else f"Gizli {i} → Gizli {i+1}"
             
-            layer_frame = ttk.Frame(bias_frame)
-            layer_frame.grid(row=layer_idx, column=0, sticky="ew", padx=10, pady=5)
-            layer_frame.grid_columnconfigure(0, weight=1)
-            
-            ttk.Label(
-                layer_frame,
-                text=f"{layer_name} Bias Değerleri:",
-                font=("Helvetica", 12, "bold")
-            ).grid(row=0, column=0, sticky="w", pady=(5, 2))
-            
-            # Bias değerlerini grid olarak düzenle
-            values_grid = ttk.Frame(layer_frame)
-            values_grid.grid(row=1, column=0, sticky="ew", padx=20)
-            
-            cols_per_row = 3  # Her satırda gösterilecek bias sayısı
-            for j, bias in enumerate(layer_biases):
-                row = j // cols_per_row
-                col = j % cols_per_row
-                values_grid.grid_columnconfigure(col, weight=1)
-                
-                ttk.Label(
-                    values_grid,
-                    text=f"Nöron {j+1}: {bias:.6f}",
-                    font=("Helvetica", 11)
-                ).grid(row=row, column=col, padx=10, pady=2, sticky="w")
-        
-        # Weight değerleri
-        weight_frame = ttk.LabelFrame(
-            self.main_frame,
-            text="Weight Değerleri",
-            bootstyle="primary"
-        )
-        weight_frame.grid(row=current_row, column=0, sticky="ew", pady=(0, 20))
-        weight_frame.grid_columnconfigure(0, weight=1)
-        current_row += 1
-        
-        # Her katman için weight matrisi
-        for layer_idx, weights in enumerate(self.network_parameters['weights']):
-            from_layer = "Giriş Katmanı" if layer_idx == 0 else f"Gizli Katman {layer_idx}"
-            to_layer = "Çıkış Katmanı" if layer_idx == len(self.network_parameters['weights'])-1 else f"Gizli Katman {layer_idx+1}"
-            
-            layer_frame = ttk.LabelFrame(
-                weight_frame,
-                text=f"{from_layer} → {to_layer}",
-                bootstyle="secondary"
+            # Ağırlıklar
+            weight_frame = ttk.LabelFrame(
+                self.scrollable_frame,
+                text=f"{layer_name} Ağırlıkları",
+                bootstyle="primary"
             )
-            layer_frame.grid(row=layer_idx, column=0, sticky="ew", padx=10, pady=5)
-            layer_frame.grid_columnconfigure(0, weight=1)
+            weight_frame.pack(fill=X, padx=10, pady=5)
             
-            # Tablo container
-            table_container = ttk.Frame(layer_frame)
-            table_container.grid(row=0, column=0, padx=10, pady=10, sticky="ew")
-            
-            # Her sütuna eşit ağırlık ver
-            for j in range(weights.shape[1] + 1):  # +1 for row headers
-                table_container.grid_columnconfigure(j, weight=1)
-            
-            # Sütun başlıkları
-            ttk.Label(
-                table_container,
-                text="Nöron",
-                font=("Helvetica", 10, "bold")
-            ).grid(row=0, column=0, padx=5, pady=2)
-            
-            for j in range(weights.shape[1]):
-                ttk.Label(
-                    table_container,
-                    text=f"X{j+1}" if layer_idx == 0 else f"H{layer_idx}{j+1}",
-                    font=("Helvetica", 10, "bold")
-                ).grid(row=0, column=j+1, padx=5, pady=2)
-            
-            # Weight değerleri
-            for i in range(weights.shape[0]):
-                # Satır başlığı
-                ttk.Label(
-                    table_container,
-                    text=f"{'Y' if layer_idx == len(self.network_parameters['weights'])-1 else 'H'}{i+1}",
-                    font=("Helvetica", 10, "bold")
-                ).grid(row=i+1, column=0, padx=5, pady=2)
-                
-                # Weight değerleri
-                for j in range(weights.shape[1]):
-                    value_frame = ttk.Frame(table_container)
-                    value_frame.grid(row=i+1, column=j+1, sticky="ew", padx=2, pady=1)
-                    value_frame.grid_columnconfigure(0, weight=1)
-                    
+            weights = self.network_parameters['weights'][i]
+            for j in range(weights.shape[0]):
+                for k in range(weights.shape[1]):
                     ttk.Label(
-                        value_frame,
-                        text=f"{weights[i,j]:.6f}",
-                        font=("Courier", 10)
-                    ).grid(row=0, column=0, sticky="ew")
-        
-        # Kapat butonu
-        ttk.Button(
-            self.main_frame,
-            text="Kapat",
-            bootstyle="secondary",
-            command=self.destroy
-        ).grid(row=current_row, column=0, pady=10) 
+                        weight_frame,
+                        text=f"w{j+1}{k+1}: {weights[j,k]:.6f}",
+                        font=("Helvetica", 12)
+                    ).pack(padx=10, pady=2)
+            
+            # Bias değerleri
+            bias_frame = ttk.LabelFrame(
+                self.scrollable_frame,
+                text=f"{layer_name} Bias Değerleri",
+                bootstyle="primary"
+            )
+            bias_frame.pack(fill=X, padx=10, pady=5)
+            
+            biases = self.network_parameters['biases'][i]
+            for j, bias in enumerate(biases):
+                ttk.Label(
+                    bias_frame,
+                    text=f"b{j+1}: {bias:.6f}",
+                    font=("Helvetica", 12)
+                ).pack(padx=10, pady=2) 
