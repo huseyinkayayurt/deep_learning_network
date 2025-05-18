@@ -5,10 +5,11 @@ from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledFrame
 import numpy as np
 
+
 class NetworkParametersWindow(tk.Toplevel):
     def __init__(self, parent, network_config):
         super().__init__(parent)
-        
+
         self.parent = parent
         self.network_config = network_config
         self.layer_sizes = [
@@ -16,30 +17,26 @@ class NetworkParametersWindow(tk.Toplevel):
             *network_config['hidden_layers'],
             network_config['output_count']
         ]
-        
-        # Pencere ayarları
+
         self.title("Ağ Parametreleri")
         self.geometry("1000x800")
         self.minsize(800, 600)
-        
-        # Scrollable container
+
         self.scroll_container = ScrolledFrame(self, autohide=True)
         self.scroll_container.pack(fill=BOTH, expand=YES)
-        
-        # Ana container
+
         self.main_container = ttk.Frame(self.scroll_container)
         self.main_container.pack(fill=BOTH, expand=YES, padx=20, pady=20)
-        
-        # Parametreleri saklamak için
+
         self.input_entries = []
         self.bias_entries = []
         self.weight_entries = []
-        
+
         self.create_input_section()
         self.create_bias_section()
         self.create_weight_section()
         self.create_buttons()
-        
+
     def create_input_section(self):
         """Input değerleri için matris"""
         frame = ttk.LabelFrame(
@@ -48,18 +45,17 @@ class NetworkParametersWindow(tk.Toplevel):
             bootstyle="primary"
         )
         frame.pack(fill=X, pady=(0, 20))
-        
-        # Input sayısı kadar entry oluştur
+
         input_size = self.layer_sizes[0]
         entries_frame = ttk.Frame(frame)
         entries_frame.pack(fill=X, padx=10, pady=10)
-        
+
         ttk.Label(
             entries_frame,
             text="X değerleri:",
             font=("Helvetica", 12)
         ).pack(side=LEFT, padx=(0, 10))
-        
+
         for i in range(input_size):
             entry = ttk.Entry(
                 entries_frame,
@@ -69,7 +65,7 @@ class NetworkParametersWindow(tk.Toplevel):
             entry.pack(side=LEFT, padx=2)
             entry.insert(0, "0.0")
             self.input_entries.append(entry)
-            
+
     def create_bias_section(self):
         """Her layer için bias değerleri"""
         frame = ttk.LabelFrame(
@@ -78,19 +74,18 @@ class NetworkParametersWindow(tk.Toplevel):
             bootstyle="primary"
         )
         frame.pack(fill=X, pady=(0, 20))
-        
-        # Her layer için bias değerleri
-        for i in range(1, len(self.layer_sizes)):  # input layer hariç
+
+        for i in range(1, len(self.layer_sizes)):
             layer_frame = ttk.Frame(frame)
             layer_frame.pack(fill=X, padx=10, pady=5)
-            
-            layer_name = "Gizli Katman" if i < len(self.layer_sizes)-1 else "Çıkış Katmanı"
+
+            layer_name = "Gizli Katman" if i < len(self.layer_sizes) - 1 else "Çıkış Katmanı"
             ttk.Label(
                 layer_frame,
-                text=f"{layer_name} {i if i < len(self.layer_sizes)-1 else ''} Bias:",
+                text=f"{layer_name} {i if i < len(self.layer_sizes) - 1 else ''} Bias:",
                 font=("Helvetica", 12)
             ).pack(side=LEFT, padx=(0, 10))
-            
+
             layer_biases = []
             for j in range(self.layer_sizes[i]):
                 entry = ttk.Entry(
@@ -101,9 +96,9 @@ class NetworkParametersWindow(tk.Toplevel):
                 entry.pack(side=LEFT, padx=2)
                 entry.insert(0, "0.0")
                 layer_biases.append(entry)
-            
+
             self.bias_entries.append(layer_biases)
-            
+
     def create_weight_section(self):
         """Katmanlar arası weight değerleri"""
         frame = ttk.LabelFrame(
@@ -112,27 +107,25 @@ class NetworkParametersWindow(tk.Toplevel):
             bootstyle="primary"
         )
         frame.pack(fill=X, pady=(0, 20))
-        
-        # Her katman çifti için weight matrisi
-        for i in range(len(self.layer_sizes)-1):
+
+        for i in range(len(self.layer_sizes) - 1):
             layer_frame = ttk.LabelFrame(
                 frame,
                 text=self.get_weight_matrix_label(i),
                 bootstyle="secondary"
             )
             layer_frame.pack(fill=X, padx=10, pady=10)
-            
-            # Weight matrisi
+
             matrix_frame = ttk.Frame(layer_frame)
             matrix_frame.pack(padx=10, pady=10)
-            
+
             layer_weights = []
-            for j in range(self.layer_sizes[i+1]):  # hedef layer
+            for j in range(self.layer_sizes[i + 1]):
                 row_weights = []
                 row_frame = ttk.Frame(matrix_frame)
                 row_frame.pack()
-                
-                for k in range(self.layer_sizes[i]):  # kaynak layer
+
+                for k in range(self.layer_sizes[i]):
                     entry = ttk.Entry(
                         row_frame,
                         width=8,
@@ -141,9 +134,9 @@ class NetworkParametersWindow(tk.Toplevel):
                     entry.grid(row=j, column=k, padx=2, pady=2)
                     entry.insert(0, "0.0")
                     row_weights.append(entry)
-                
+
                 layer_weights.append(row_weights)
-            
+
             self.weight_entries.append(layer_weights)
 
     def get_weight_matrix_label(self, layer_idx):
@@ -157,82 +150,76 @@ class NetworkParametersWindow(tk.Toplevel):
                 return f"{layer_idx}. Gizli Katman → Çıkış Katmanı"
         else:
             return f"{layer_idx}. Gizli Katman → {layer_idx + 1}. Gizli Katman"
-            
+
     def create_buttons(self):
         """Butonlar"""
         button_frame = ttk.Frame(self.main_container)
         button_frame.pack(pady=20)
-        
+
         ttk.Button(
             button_frame,
             text="Rastgele Değerler Ata",
             bootstyle="info",
             command=self.randomize_values
         ).pack(side=LEFT, padx=5)
-        
+
         ttk.Button(
             button_frame,
             text="Temizle",
             bootstyle="secondary-outline",
             command=self.clear_values
         ).pack(side=LEFT, padx=5)
-        
+
         ttk.Button(
             button_frame,
             text="Parametreleri Onayla",
             bootstyle="primary",
             command=self.submit_parameters
         ).pack(side=LEFT, padx=5)
-        
+
     def randomize_values(self):
         """Tüm değerlere rastgele sayılar ata"""
-        # Xavier/Glorot initialization için scale faktörü
+
         def get_scale(n_in, n_out):
             return np.sqrt(2.0 / (n_in + n_out))
-            
-        # Input değerleri
+
         for entry in self.input_entries:
             entry.delete(0, tk.END)
             entry.insert(0, f"{np.random.uniform(-1, 1):.3f}")
-        
-        # Bias değerleri - küçük pozitif değerler
+
         for layer_biases in self.bias_entries:
             for entry in layer_biases:
                 entry.delete(0, tk.END)
                 entry.insert(0, f"{np.random.uniform(0, 0.1):.3f}")
-        
-        # Weight değerleri - Xavier/Glorot initialization
+
         for i, layer_weights in enumerate(self.weight_entries):
             n_in = self.layer_sizes[i]
             n_out = self.layer_sizes[i + 1]
             scale = get_scale(n_in, n_out)
-            
+
             for row_weights in layer_weights:
                 for entry in row_weights:
                     entry.delete(0, tk.END)
                     value = np.random.normal(0, scale)
                     entry.insert(0, f"{value:.3f}")
-                    
+
     def clear_values(self):
         """Tüm değerleri sıfırla"""
-        # Input değerleri
         for entry in self.input_entries:
             entry.delete(0, tk.END)
             entry.insert(0, "0.0")
-        
-        # Bias değerleri
+
         for layer_biases in self.bias_entries:
             for entry in layer_biases:
                 entry.delete(0, tk.END)
                 entry.insert(0, "0.0")
-        
-        # Weight değerleri
+
         for layer_weights in self.weight_entries:
             for row_weights in layer_weights:
                 for entry in row_weights:
                     entry.delete(0, tk.END)
                     entry.insert(0, "0.0")
-                    
+
     def validate_float(self, value):
         """Girilen değerin float olup olmadığını kontrol et"""
         try:
@@ -240,11 +227,10 @@ class NetworkParametersWindow(tk.Toplevel):
             return True, None
         except ValueError:
             return False, "Lütfen geçerli bir sayı giriniz"
-            
+
     def submit_parameters(self):
         """Parametreleri topla ve kontrol et"""
         try:
-            # Input değerleri
             input_values = []
             for entry in self.input_entries:
                 valid, error = self.validate_float(entry.get())
@@ -252,8 +238,7 @@ class NetworkParametersWindow(tk.Toplevel):
                     messagebox.showerror("Hata", f"Input değeri hatalı: {error}")
                     return
                 input_values.append(float(entry.get()))
-            
-            # Bias değerleri
+
             bias_values = []
             for layer_biases in self.bias_entries:
                 layer_bias = []
@@ -264,8 +249,7 @@ class NetworkParametersWindow(tk.Toplevel):
                         return
                     layer_bias.append(float(entry.get()))
                 bias_values.append(np.array(layer_bias))
-            
-            # Weight değerleri
+
             weight_values = []
             for layer_idx, layer_weights in enumerate(self.weight_entries):
                 layer_weight = []
@@ -278,29 +262,24 @@ class NetworkParametersWindow(tk.Toplevel):
                             return
                         row.append(float(entry.get()))
                     layer_weight.append(row)
-                # Ağırlık matrisini doğru boyutlarda oluştur
-                # layer_weight şu anda (hedef_boyut x kaynak_boyut) şeklinde
                 weight_values.append(np.array(layer_weight))
                 print(f"Layer {layer_idx} weight matrix shape: {np.array(layer_weight).shape}")
-            
-            # Parametreleri kaydet
+
             network_parameters = {
                 'inputs': np.array(input_values),
                 'biases': bias_values,
                 'weights': weight_values
             }
-            
-            # Boyut kontrolü
+
             print("\nNetwork parameter shapes:")
             print(f"Inputs shape: {network_parameters['inputs'].shape}")
             for i in range(len(network_parameters['weights'])):
                 print(f"Layer {i}:")
                 print(f"  Weight shape: {network_parameters['weights'][i].shape}")
                 print(f"  Bias shape: {network_parameters['biases'][i].shape}")
-            
-            # Ana pencereye bildir ve kapat
+
             self.parent.on_parameters_configured(network_parameters)
             self.destroy()
-            
+
         except Exception as e:
             messagebox.showerror("Hata", f"Beklenmeyen bir hata oluştu: {str(e)}") 

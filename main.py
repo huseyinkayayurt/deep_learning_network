@@ -16,16 +16,13 @@ class HiddenLayerConfig(tk.Toplevel):
         self.input_count = input_count
         self.output_count = output_count
 
-        # Pencere ayarları
         self.title("Gizli Katman Yapılandırması")
         self.geometry("600x500")
         self.minsize(400, 300)
 
-        # Ana container
         self.main_container = ttk.Frame(self)
         self.main_container.pack(fill=BOTH, expand=YES, padx=20, pady=20)
 
-        # Başlık
         title = ttk.Label(
             self.main_container,
             text="Gizli Katmanların Yapılandırması",
@@ -34,7 +31,6 @@ class HiddenLayerConfig(tk.Toplevel):
         )
         title.pack(pady=(0, 20))
 
-        # Açıklama
         description = ttk.Label(
             self.main_container,
             text=f"Lütfen {hidden_count} gizli katman için nöron sayılarını belirleyin",
@@ -43,15 +39,12 @@ class HiddenLayerConfig(tk.Toplevel):
         )
         description.pack(pady=(0, 20))
 
-        # Scrollable frame for inputs
         self.scroll_frame = ScrolledFrame(self.main_container, autohide=True)
         self.scroll_frame.pack(fill=BOTH, expand=YES)
 
-        # Input alanları
         self.inputs = []
         self.create_inputs()
 
-        # Butonlar
         button_frame = ttk.Frame(self.main_container)
         button_frame.pack(pady=20)
 
@@ -69,7 +62,6 @@ class HiddenLayerConfig(tk.Toplevel):
             command=self.submit_form
         ).pack(side=LEFT, padx=5)
 
-        # Modal pencere olarak ayarla
         self.transient(parent)
         self.grab_set()
 
@@ -81,18 +73,15 @@ class HiddenLayerConfig(tk.Toplevel):
             frame = ttk.Frame(self.scroll_frame)
             frame.pack(fill=X, pady=5)
 
-            # Label container
             label_container = ttk.Frame(frame)
             label_container.pack(side=LEFT)
 
-            # Layer label
             ttk.Label(
                 label_container,
                 text=f"{i + 1}. Gizli Katman:",
                 font=("Helvetica", 12)
             ).pack(side=LEFT, padx=(0, 5))
 
-            # Info icon ve tooltip
             next_size = self.output_count if i == self.hidden_count - 1 else "?"
             tooltip_text = f"Önceki Katman: {prev_size} nöron\nSonraki Katman: {next_size} nöron"
 
@@ -131,11 +120,9 @@ class HiddenLayerConfig(tk.Toplevel):
 
             info_label.bind('<Enter>', show_tooltip)
 
-            # Input container
             input_container = ttk.Frame(frame)
             input_container.pack(side=LEFT, fill=X, expand=YES, padx=10)
 
-            # Entry
             entry = ttk.Entry(
                 input_container,
                 bootstyle="primary",
@@ -143,7 +130,6 @@ class HiddenLayerConfig(tk.Toplevel):
             )
             entry.pack(fill=X)
 
-            # Error label
             error_label = ttk.Label(
                 input_container,
                 text="",
@@ -182,7 +168,6 @@ class HiddenLayerConfig(tk.Toplevel):
         is_valid = True
         values = []
 
-        # Tüm inputları doğrula
         for i, input_data in enumerate(self.inputs):
             entry = input_data['entry']
             error_label = input_data['error_label']
@@ -197,7 +182,6 @@ class HiddenLayerConfig(tk.Toplevel):
                 entry.configure(bootstyle="primary")
                 values.append(int(entry.get()))
 
-        # Eğer form geçerliyse sonuçları göster ve pencereyi kapat
         if is_valid:
             self.parent.on_hidden_layers_configured(values)
             self.destroy()
@@ -207,41 +191,31 @@ class NeuralNetworkConfigUI(tk.Tk):
     def __init__(self):
         super().__init__()
 
-        # Ana pencere ayarları
         self.title("YSA Yapılandırma Arayüzü")
         self.geometry("1000x800")
         self.minsize(800, 600)
 
-        # Tema ve stil ayarları
-        self.style = ttk.Style(theme="cosmo")
+        self.style = ttk.Style()
 
-        # Scrollable ana container
         self.scroll_container = ScrolledFrame(self, autohide=True)
         self.scroll_container.pack(fill=BOTH, expand=YES)
 
-        # Ana container (responsive için)
         self.main_container = ttk.Frame(self.scroll_container)
         self.main_container.pack(fill=BOTH, expand=YES, padx=20, pady=20)
 
-        # Grid yapılandırması
         self.main_container.grid_columnconfigure(0, weight=1)
         self.main_container.grid_rowconfigure(1, weight=0)
         self.main_container.grid_rowconfigure(2, weight=0)
         self.main_container.grid_rowconfigure(3, weight=1)
 
-        # Başlık
         self.create_header()
 
-        # Form alanı
         self.create_form()
 
-        # Sonuç alanı
         self.create_result_area()
 
-        # Visualization alanı
         self.create_visualization_area()
 
-        # Ağ yapılandırması
         self.network_config = {
             'input_count': 0,
             'hidden_count': 0,
@@ -272,14 +246,11 @@ class NeuralNetworkConfigUI(tk.Tk):
 
     def create_form(self):
         """Form alanı oluşturma"""
-        # Form container
         self.form_frame = ttk.Frame(self.main_container)
         self.form_frame.grid(row=1, column=0, sticky="ew", pady=(0, 20))
 
-        # Form grid yapılandırması
         self.form_frame.grid_columnconfigure(1, weight=1)
 
-        # Input alanları
         self.inputs = {}
         input_fields = [
             ("input_count", "Input Layer Nöron Sayısı:", "Giriş katmanındaki nöron sayısı"),
@@ -287,7 +258,6 @@ class NeuralNetworkConfigUI(tk.Tk):
             ("hidden_count", "Hidden Layer Sayısı:", "Gizli katman sayısı")
         ]
 
-        # Her input için bilgi ikonları ve açıklamaları
         tooltips = [
             "Giriş katmanındaki nöron sayısı, ağa girilecek veri boyutunu belirler",
             "Çıkış katmanındaki nöron sayısı, ağın üreteceği sonuç boyutunu belirler",
@@ -295,18 +265,15 @@ class NeuralNetworkConfigUI(tk.Tk):
         ]
 
         for idx, ((key, label, placeholder), tooltip) in enumerate(zip(input_fields, tooltips)):
-            # Label ve info icon container
             label_container = ttk.Frame(self.form_frame)
             label_container.grid(row=idx, column=0, padx=(0, 10), pady=10, sticky="e")
 
-            # Label
             ttk.Label(
                 label_container,
                 text=label,
                 font=("Helvetica", 12)
             ).pack(side=LEFT)
 
-            # Info icon
             info_label = ttk.Label(
                 label_container,
                 text="ℹ",
@@ -315,13 +282,11 @@ class NeuralNetworkConfigUI(tk.Tk):
             )
             info_label.pack(side=LEFT, padx=(5, 0))
 
-            # Tooltip için binding
             def show_tooltip(event, tooltip=tooltip):
                 x, y, _, _ = event.widget.bbox("insert")
                 x += event.widget.winfo_rootx() + 25
                 y += event.widget.winfo_rooty() + 25
 
-                # Tooltip penceresi
                 tip = tk.Toplevel(self)
                 tip.wm_overrideredirect(True)
                 tip.wm_geometry(f"+{x}+{y}")
@@ -344,12 +309,10 @@ class NeuralNetworkConfigUI(tk.Tk):
 
             info_label.bind('<Enter>', show_tooltip)
 
-            # Input container (input ve hata mesajı için)
             input_container = ttk.Frame(self.form_frame)
             input_container.grid(row=idx, column=1, sticky="ew")
             input_container.grid_columnconfigure(0, weight=1)
 
-            # Input field
             entry = ttk.Entry(
                 input_container,
                 bootstyle="primary",
@@ -360,7 +323,6 @@ class NeuralNetworkConfigUI(tk.Tk):
             entry.bind('<FocusIn>', lambda e, entry=entry, ph=placeholder: self.on_focus_in(e, entry, ph))
             entry.bind('<FocusOut>', lambda e, entry=entry, ph=placeholder: self.on_focus_out(e, entry, ph))
 
-            # Hata mesajı label'ı
             error_label = ttk.Label(
                 input_container,
                 text="",
@@ -375,7 +337,6 @@ class NeuralNetworkConfigUI(tk.Tk):
                 'placeholder': placeholder
             }
 
-        # Butonlar
         self.button_frame = ttk.Frame(self.form_frame)
         self.button_frame.grid(row=len(input_fields), column=0, columnspan=2, pady=20)
 
@@ -487,7 +448,6 @@ class NeuralNetworkConfigUI(tk.Tk):
         is_valid = True
         values = {}
 
-        # Tüm inputları doğrula
         for key, input_data in self.inputs.items():
             entry = input_data['entry']
             error_label = input_data['error_label']
@@ -503,7 +463,6 @@ class NeuralNetworkConfigUI(tk.Tk):
                 entry.configure(bootstyle="primary")
                 values[key] = int(entry.get())
 
-        # Eğer form geçerliyse hidden layer yapılandırma penceresini aç
         if is_valid:
             self.network_config.update({
                 'input_count': values['input_count'],
@@ -511,7 +470,6 @@ class NeuralNetworkConfigUI(tk.Tk):
                 'output_count': values['output_count']
             })
 
-            # Hidden layer yapılandırma penceresini aç
             hidden_config = HiddenLayerConfig(
                 self,
                 values['hidden_count'],
@@ -523,7 +481,6 @@ class NeuralNetworkConfigUI(tk.Tk):
         """Hidden layer yapılandırması tamamlandığında çağrılır"""
         self.network_config['hidden_layers'] = hidden_layers
 
-        # Sonuç metnini güncelle
         result_text = "Ağ Yapılandırması:\n\n"
         result_text += f"• Giriş Katmanı: {self.network_config['input_count']} nöron\n"
         result_text += "• Gizli Katmanlar:\n"
@@ -535,10 +492,8 @@ class NeuralNetworkConfigUI(tk.Tk):
 
         self.result_label.configure(text=result_text)
 
-        # Görselleştirmeyi güncelle
         self.update_visualization()
 
-        # Parametre penceresini aç
         self.open_parameters_window()
 
     def open_parameters_window(self):
@@ -553,7 +508,6 @@ class NeuralNetworkConfigUI(tk.Tk):
             "Ağ parametreleri başarıyla kaydedildi!"
         )
 
-        # Tahmin penceresini aç
         prediction_window = NetworkPredictionWindow(
             self,
             parameters,
