@@ -1,94 +1,95 @@
 # Yapay Sinir Ağı Simülatörü
 
-Bu proje, yapay sinir ağlarının çalışma prensiplerini görselleştirmek ve anlamak için geliştirilmiş bir simülasyon aracıdır.
+Bu proje, yapay sinir ağlarının (YSA) temel prensiplerini görselleştirmek, eğitim ve tahmin süreçlerini adım adım
+deneyimlemek için geliştirilmiş modern bir simülasyon uygulamasıdır.
 
-## Özellikler
+---
 
-- Çok katmanlı yapay sinir ağı simülasyonu
-- Görsel ağ yapısı gösterimi
-- Gerçek zamanlı eğitim ve tahmin
-- Eğitim sürecinin görselleştirilmesi
-- Loss değeri grafiği
-- Parametrelerin detaylı gösterimi
+## Kurulum ve Çalıştırma
 
-### Aktivasyon Fonksiyonları
+### 1. Python Kurulumu
 
-Simülatör iki farklı aktivasyon fonksiyonu sunar:
+- Python 3.8 veya üzeri bir sürüm gereklidir.
+- [Python İndir](https://www.python.org/downloads/)
 
-1. **ReLU (Rectified Linear Unit)**
-   - f(x) = max(0, x)
-   - Gradyan problemi yaşamaz
-   - Hızlı hesaplama
-   - Seyrek aktivasyon özelliği
+### 2. Bağımlılıkların Yüklenmesi
 
-2. **Sigmoid**
-   - f(x) = 1 / (1 + e^(-x))
-   - Çıktıyı [0,1] aralığına sıkıştırır
-   - Sınıflandırma problemleri için uygundur
-   - Biyolojik nöronlara benzer davranış
+Aşağıdaki komut ile gerekli tüm kütüphaneleri yükleyin:
 
-### Loss Fonksiyonları
-
-İki farklı loss fonksiyonu mevcuttur:
-
-1. **Mean Square Error (MSE)**
-   - Regresyon problemleri için uygundur
-   - Tahmin ve gerçek değer arasındaki farkın karesini kullanır
-   - Genel amaçlı kullanım için idealdir
-
-2. **Cross Entropy**
-   - Sınıflandırma problemleri için optimize edilmiştir
-   - Sigmoid aktivasyon fonksiyonu ile mükemmel uyum sağlar
-   - Daha iyi gradyan akışı sağlar
-   - [0,1] aralığındaki çıktılar için uygundur
-
-## Kurulum
-
-1. Gerekli paketleri yükleyin:
 ```bash
 pip install -r requirements.txt
 ```
 
-2. Programı çalıştırın:
+> **Not:** Tkinter çoğu Python dağıtımında dahili gelir. Eğer Linux/Mac kullanıyorsanız ve Tkinter yüklü değilse:
+> - **Linux:** `sudo apt-get install python3-tk`
+> - **Mac:** `brew install python-tk@3.8`
+
+### 3. Projeyi Çalıştırma
+
 ```bash
 python main.py
 ```
 
-## Kullanım
+---
 
-1. **Ağ Yapısını Belirleme**
-   - Giriş katmanı nöron sayısı
-   - Gizli katman sayısı ve her katmandaki nöron sayıları
-   - Çıkış katmanı nöron sayısı
+## Uygulama Akışı ve Pencereler
 
-2. **Parametreleri Ayarlama**
-   - Başlangıç ağırlıkları ve bias değerleri
-   - Aktivasyon fonksiyonu seçimi (ReLU veya Sigmoid)
-   - Loss fonksiyonu seçimi (MSE veya Cross Entropy)
-   - Learning rate ve epoch sayısı
+### 1. Ağ Yapılandırma Penceresi
 
-3. **Eğitim ve Tahmin**
-   - Gerçek değerleri girin
-   - Eğitimi başlatın
-   - Loss grafiğini takip edin
-   - Güncellenmiş parametreleri inceleyin
-   - Tahminleri görüntüleyin
+- **Amaç:** Ağın katman sayısı, giriş/çıkış/gizli katman nöron sayıları gibi temel mimariyi belirlemek.
+- **Kullanıcıdan Beklenen:**
+    - Giriş katmanı nöron sayısı
+    - Gizli katman sayısı ve her birinin nöron sayısı
+    - Çıkış katmanı nöron sayısı
+    - "Devam" ile bir sonraki adıma geçiş
 
-## Öneriler
+### 2. Ağ Parametreleri Penceresi
 
-- Sigmoid aktivasyon fonksiyonu ile Cross Entropy loss fonksiyonunu birlikte kullanmanız önerilir
-- ReLU aktivasyonu genel amaçlı kullanım için uygundur
-- Learning rate değerini problem özelinde ayarlayın
-- Epoch sayısını loss değerinin değişimine göre belirleyin
+- **Amaç:** Kullanıcıdan ağırlıklar, biaslar ve giriş değerlerinin manuel veya rastgele girilmesi.
+- **Kullanıcıdan Beklenen:**
+    - Her nöron için giriş değeri
+    - Her katman için bias değerleri
+    - Katmanlar arası ağırlık matrisleri
+    - "Rastgele Ata" ile otomatik değer üretme
+    - "Temizle" ile sıfırlama
+    - "Parametreleri Onayla" ile devam
 
-## Teknik Detaylar
+### 3. Tahmin ve Eğitim Penceresi
 
-- Python 3.x ile geliştirilmiştir
-- Tkinter ve ttkbootstrap ile modern bir arayüz
-- Numpy ile matris işlemleri
-- Matplotlib ile görselleştirme
-- Modüler ve genişletilebilir yapı
+- **Amaç:**
+    - Aktivasyon ve loss fonksiyonu seçimi
+    - Gerçek değerlerin girilmesi
+    - Eğitim parametrelerinin (epoch, learning rate) ayarlanması
+    - Eğitimi başlatma ve loss grafiğini izleme
+    - Tahmin sonuçlarını ve loss değerini görme
+- **Kullanıcıdan Beklenen:**
+    - Aktivasyon fonksiyonu seçimi (ReLU, Sigmoid)
+    - Loss fonksiyonu seçimi (MSE, Cross Entropy)
+    - Gerçek çıkış değerlerinin girilmesi
+    - Epoch ve learning rate ayarlanması
+    - "Eğitimi Başlat" ile eğitim sürecini başlatma
+    - "Tahmin Et" ile güncel ağı kullanarak tahmin yapma
+    - "Karşılaştırmayı Göster" ile tahmin ve gerçek değerleri karşılaştırma
+
+### 4. Eğitim Sonrası Güncellenmiş Parametreler Penceresi
+
+- **Amaç:** Eğitim tamamlandıktan sonra güncellenmiş ağırlık ve bias değerlerini detaylı ve scrollable bir ekranda
+  göstermek.
+- **Kullanıcıdan Beklenen:**
+    - Tüm parametreleri inceleyebilmek için pencereyi kaydırmak (scroll)
+    - Pencereyi kapatmak için "Kapat" butonunu kullanmak
+
+---
+
+## Aktivasyon ve Loss Fonksiyonları
+
+- **Aktivasyon Fonksiyonları:**
+    - ReLU (Rectified Linear Unit)
+    - Sigmoid
+- **Loss Fonksiyonları:**
+    - Mean Square Error (MSE)
+    - Cross Entropy
 
 ## Lisans
 
-Bu proje MIT lisansı altında dağıtılmaktadır. 
+Bu proje MIT lisansı ile açık kaynak olarak sunulmaktadır. 

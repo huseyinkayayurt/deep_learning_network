@@ -1,6 +1,5 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-import ttkbootstrap as ttk
 from ttkbootstrap.constants import *
 from ttkbootstrap.scrolled import ScrolledFrame
 from network_visualizer import NetworkVisualizer
